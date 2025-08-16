@@ -1,0 +1,58 @@
+:root {
+  --bg: #0b0e11;
+  --fg: #e6ebef;
+  --muted: #9aa7b0;
+  --accent: #00b4ff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% 20%, #0f141a, #07090c);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  height: 100%;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .side {
+    order: -1;
+  }
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+}
+
+.side {
+  padding: 16px;
+}
+
+.controls h3 {
+  margin: 0 0 8px;
+}
+
+.controls ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.center { display: grid; place-items: center; height: 100%; }
+
+canvas { outline: none; }
+
+
