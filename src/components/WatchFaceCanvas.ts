@@ -226,23 +226,32 @@ function drawLCD(
     ctx.fillText(parts.ampm, lcdX + 10, indicatorY + 10);
   }
 
-  // Draw day of week (center) with mini seven-segment digits
-  const dayText = parts.day;
-  let dayX =
+  // Draw mode indicator or day of week (center) with mini seven-segment digits
+  let centerText = parts.day; // Default to day of week in time mode
+
+  // In other modes, show mode indicator
+  if (state.mode === "alarm") {
+    centerText = "AL";
+  } else if (state.mode === "stopwatch") {
+    centerText = "ST";
+  }
+
+  let centerX =
     lcdX +
     lcdW / 2 -
-    (dayText.length * (indicatorSize * 0.6 + indicatorGap)) / 2;
-  for (let i = 0; i < dayText.length; i++) {
-    const char = dayText[i];
+    (centerText.length * (indicatorSize * 0.6 + indicatorGap)) / 2;
+
+  for (let i = 0; i < centerText.length; i++) {
+    const char = centerText[i];
     drawDigit(
       ctx,
-      dayX,
+      centerX,
       indicatorY - indicatorSize * 0.7,
       indicatorSize * 0.6,
       indicatorSize * 0.7,
       char
     );
-    dayX += indicatorSize * 0.6 + indicatorGap;
+    centerX += indicatorSize * 0.6 + indicatorGap;
   }
 
   // Draw date (right) with mini seven-segment digits
@@ -262,8 +271,42 @@ function drawLCD(
     dateX += indicatorSize * 0.6 + indicatorGap;
   }
 
-  // Main time display using seven-segment drawing (includes inline seconds)
-  drawSevenSegmentTime(ctx, parts, lcdX, lcdY, lcdW, lcdH);
+  // Display based on mode
+  if (state.mode === "time") {
+    // Time mode: show current time
+    drawSevenSegmentTime(ctx, parts, lcdX, lcdY, lcdW, lcdH);
+  } else if (state.mode === "alarm") {
+    // Alarm mode: show alarm time
+    const alarmHours = state.alarm.hour;
+    const alarmMinutes = state.alarm.minute;
+    const alarmParts = {
+      ...parts,
+      hours: parts.ampm
+        ? alarmHours > 12
+          ? alarmHours - 12
+          : alarmHours === 0
+          ? 12
+          : alarmHours
+        : alarmHours,
+      minutes: alarmMinutes,
+      seconds: 0,
+    };
+    drawSevenSegmentTime(ctx, alarmParts, lcdX, lcdY, lcdW, lcdH);
+  } else if (state.mode === "stopwatch") {
+    // Stopwatch mode: show stopwatch time
+    const swTimeStr = state.stopwatch.display; // "MM:SS.CC"
+    const minutes = parseInt(swTimeStr.substring(0, 2), 10);
+    const seconds = parseInt(swTimeStr.substring(3, 5), 10);
+    const centiseconds = parseInt(swTimeStr.substring(6, 8), 10);
+
+    const swParts = {
+      ...parts,
+      hours: minutes,
+      minutes: seconds,
+      seconds: centiseconds,
+    };
+    drawSevenSegmentTime(ctx, swParts, lcdX, lcdY, lcdW, lcdH);
+  }
 
   // Bottom legends
   ctx.textAlign = "left";

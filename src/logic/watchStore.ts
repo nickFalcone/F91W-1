@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { computeNowString, formatTimeForDisplay, getDayOfWeek } from "./time";
 
-export type Mode = "time" | "alarm" | "stopwatch" | "set-time";
+export type Mode = "time" | "alarm" | "stopwatch";
 
 export type ButtonKey = "L" | "C" | "A";
 
@@ -55,18 +55,64 @@ export const useWatchStore = create<WatchState>()(
       ...initialState,
       handleButton: (key) => {
         const state = get();
-        if (state.mode === "time") {
-          if (key === "C") set({ mode: "stopwatch" });
-          if (key === "A")
+
+        // Light button works in all modes
+        if (key === "L") {
+          // Turn light on while button is pressed (handled in UI)
+          set({ lightOn: true });
+
+          // In stopwatch mode, reset the stopwatch if it's stopped
+          if (state.mode === "stopwatch" && !state.stopwatch.running) {
+            set({
+              stopwatch: {
+                running: false,
+                startMs: null,
+                elapsedMs: 0,
+                display: "00:00.00",
+              },
+            });
+          }
+          // Handle split if running (not implemented yet)
+          else if (state.mode === "stopwatch" && state.stopwatch.running) {
+            // split functionality would go here
+          }
+        }
+
+        // Mode button cycles through modes
+        if (key === "C") {
+          // Cycle through modes: time -> alarm -> stopwatch -> time
+          if (state.mode === "time") {
+            set({ mode: "alarm" });
+          } else if (state.mode === "alarm") {
+            set({ mode: "stopwatch" });
+          } else if (state.mode === "stopwatch") {
+            // Reset stopwatch when exiting stopwatch mode
+            set({
+              stopwatch: {
+                running: false,
+                startMs: null,
+                elapsedMs: 0,
+                display: "00:00.00",
+              },
+              mode: "time",
+            });
+          }
+        }
+
+        // A button functionality depends on mode
+        if (key === "A") {
+          if (state.mode === "time") {
+            // Toggle 12/24 hour format in time mode
             set({
               settings: { ...state.settings, is24h: !state.settings.is24h },
             });
-          if (key === "L") {
-            // Turn light on while button is pressed (handled in UI)
-            set({ lightOn: true });
-          }
-        } else if (state.mode === "stopwatch") {
-          if (key === "A") {
+          } else if (state.mode === "alarm") {
+            // Toggle alarm on/off in alarm mode
+            set({
+              alarm: { ...state.alarm, enabled: !state.alarm.enabled },
+            });
+          } else if (state.mode === "stopwatch") {
+            // Start/stop stopwatch in stopwatch mode
             if (!state.stopwatch.running) {
               set({
                 stopwatch: {
@@ -89,22 +135,6 @@ export const useWatchStore = create<WatchState>()(
                 },
               });
             }
-          }
-          if (key === "C") {
-            set({
-              stopwatch: {
-                running: false,
-                startMs: null,
-                elapsedMs: 0,
-                display: "00:00.00",
-              },
-              mode: "time",
-            });
-          }
-          if (key === "L") {
-            // Turn light on in stopwatch mode too
-            set({ lightOn: true });
-            // split not persisted yet
           }
         }
       },
